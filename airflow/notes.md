@@ -16,3 +16,9 @@ docker compose --env-file .env \
   exec airflow-dag-processor \
   airflow dags list-import-errors
 ```
+
+- Rerun container
+
+```bash
+docker compose --env-file .env -f airflow/docker-compose.yaml up  --build -d
+```

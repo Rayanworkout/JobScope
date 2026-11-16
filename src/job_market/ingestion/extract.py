@@ -1,5 +1,5 @@
 def main():
-    print("Hello from job-market!")
+    print("Hello from job-market extract !")
 
 
 if __name__ == "__main__":

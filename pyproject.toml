@@ -2,8 +2,13 @@
 name = "job-market"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
+readme = "0 - README.md"
 requires-python = ">=3.14"
 dependencies = [
     "requests>=2.34.2",
+]
+
+[dependency-groups]
+dev = [
+    "apache-airflow-task-sdk>=1.4.0",
 ]

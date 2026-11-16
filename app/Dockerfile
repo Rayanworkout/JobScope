@@ -1,12 +1,16 @@
-# docker build -f app/Dockerfile -t job-market-app:dev .
-# docker run --rm job-market-app:dev
-
 FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY src/ /app/src/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-dev
+
+COPY src/ ./src/
 
 ENV PYTHONPATH=/app/src
+ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["python", "-m", "job_market.main"]
