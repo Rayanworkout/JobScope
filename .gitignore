@@ -10,3 +10,4 @@ wheels/
 .venv
 .env
 1 - NOTES.md
+logs/

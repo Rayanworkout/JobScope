@@ -1,0 +1,1 @@
+This is the job market app which is ran by Airflow through a docker container, that's why we have the app/Dockerfile
