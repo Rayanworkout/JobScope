@@ -3,7 +3,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from ...core.exceptions import MissingEnvironmentVariable
+from ...core.exceptions import CouldNotFetchJobs, MissingEnvironmentVariable
 from ..models import Job
 
 """
@@ -53,18 +53,45 @@ from ..models import Job
 
 """
 
+import time
+
 
 def fetch_himalayas_listings() -> list[Job]:
     load_dotenv("app.env")
-    API_URL, API_KEY = os.getenv("HIMALAYAS_API_URL"), os.getenv("HIMALAYAS_API_KEY")
 
-    if not API_KEY or not API_URL:
+    API_KEY = os.getenv("HIMALAYAS_API_KEY")
+    API_URL = "https://himalayas.app/jobs/api"
+
+    if not API_KEY:
         raise MissingEnvironmentVariable(
-            "HIMALAYAS_API_URL and HIMALAYAS_API_KEY must be defined before running the extract job."
+            "HIMALAYAS_API_KEY must be defined before running the extract job."
         )
 
-    response = requests.get(
-        API_URL, headers={"Authorization": f"Bearer {API_KEY}"}
-    ).json()
+    all_jobs: list[Job] = []
 
-    return [Job.from_himalayas(item) for item in response["jobs"]]
+    cursor = ""
+
+    # Pagination
+    while True:
+        if cursor is None:
+            break
+
+        response = requests.get(
+            f"{API_URL}?limit=20&cursor={cursor}",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+        ).json()
+
+        cursor = response.get("nextCursor")
+
+        items = response.get("jobs")
+
+        if items is None or not items:
+            raise CouldNotFetchJobs(
+                "Could not fetch jobs from Himalayas API. API response:", response
+            )
+
+        all_jobs.extend([Job.from_himalayas(i) for i in items])
+        time.sleep(0.3)
+        break
+
+    return all_jobs
