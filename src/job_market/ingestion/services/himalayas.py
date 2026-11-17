@@ -1,13 +1,5 @@
-import os
-
-import requests
-from dotenv import load_dotenv
-
-from ...core.exceptions import CouldNotFetchJobs, MissingEnvironmentVariable
-from ..models import Job
-
 """
-
+RESPONSE EXAMPLE (1 ITEM)
 {
     "title": "Security Engineer",
     "excerpt": "About WebEngage:WebEngage is an enterprise-grade customer engagement and retention platform that helps global brands across industries such as e-commerce, fintech, travel, edtech, gaming, media, and consumer apps.",
@@ -53,45 +45,84 @@ from ..models import Job
 
 """
 
+import os
 import time
+
+import requests
+from dotenv import load_dotenv
+
+from ...core.exceptions import CouldNotFetchJobs, MissingEnvironmentVariable
+from ..models import Job
+
+API_URL = "https://himalayas.app/jobs/api"
+PAGE_SIZE = 20
+REQUEST_TIMEOUT = 30
+REQUEST_DELAY = 0.3
 
 
 def fetch_himalayas_listings() -> list[Job]:
     load_dotenv("app.env")
 
-    API_KEY = os.getenv("HIMALAYAS_API_KEY")
-    API_URL = "https://himalayas.app/jobs/api"
+    api_key = os.getenv("HIMALAYAS_API_KEY")
 
-    if not API_KEY:
+    if not api_key:
         raise MissingEnvironmentVariable(
             "HIMALAYAS_API_KEY must be defined before running the extract job."
         )
 
-    all_jobs: list[Job] = []
+    jobs: list[Job] = []
+    cursor: str | None = None
 
-    cursor = ""
+    with requests.Session() as session:
+        session.headers.update(
+            {
+                "Authorization": f"Bearer {api_key}",
+            }
+        )
 
-    # Pagination
-    while True:
-        if cursor is None:
-            break
+        while True:
+            params = {"limit": PAGE_SIZE}
 
-        response = requests.get(
-            f"{API_URL}?limit=20&cursor={cursor}",
-            headers={"Authorization": f"Bearer {API_KEY}"},
-        ).json()
+            if cursor:
+                params["cursor"] = cursor
 
-        cursor = response.get("nextCursor")
+            try:
+                response = session.get(
+                    API_URL,
+                    params=params,
+                    timeout=REQUEST_TIMEOUT,
+                )
+                response.raise_for_status()
+                payload = response.json()
 
-        items = response.get("jobs")
+            except (requests.RequestException, ValueError) as exc:
+                raise CouldNotFetchJobs(
+                    f"Failed to fetch Himalayas listings: {exc}",
+                    {"error": str(exc)},
+                ) from exc
 
-        if items is None or not items:
-            raise CouldNotFetchJobs(
-                "Could not fetch jobs from Himalayas API. API response:", response
-            )
+            items = payload.get("jobs")
 
-        all_jobs.extend([Job.from_himalayas(i) for i in items])
-        time.sleep(0.3)
-        break
+            if not isinstance(items, list):
+                raise CouldNotFetchJobs(
+                    "Invalid Himalayas API response: missing or invalid 'jobs'.",
+                    payload,
+                )
 
-    return all_jobs
+            jobs.extend(Job.from_himalayas(item) for item in items)
+
+            next_cursor = payload.get("nextCursor")
+
+            if not next_cursor:
+                break
+
+            if next_cursor == cursor:
+                raise CouldNotFetchJobs(
+                    "Himalayas API returned the same cursor twice.",
+                    payload,
+                )
+
+            cursor = next_cursor
+            time.sleep(REQUEST_DELAY)
+    
+    return jobs
