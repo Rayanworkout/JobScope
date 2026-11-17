@@ -54,8 +54,8 @@ from ..models import Job
 """
 
 
-def fetch_himalayas_listings():
-    load_dotenv()
+def fetch_himalayas_listings() -> list[Job]:
+    load_dotenv("app.env")
     API_URL, API_KEY = os.getenv("HIMALAYAS_API_URL"), os.getenv("HIMALAYAS_API_KEY")
 
     if not API_KEY or not API_URL:
@@ -63,10 +63,8 @@ def fetch_himalayas_listings():
             "HIMALAYAS_API_URL and HIMALAYAS_API_KEY must be defined before running the extract job."
         )
 
-    raw_data = requests.get(
+    response = requests.get(
         API_URL, headers={"Authorization": f"Bearer {API_KEY}"}
     ).json()
 
-    jobs_objects = [Job.from_himalayas(item) for item in raw_data["jobs"]]
-
-    print(jobs_objects[0])
+    return [Job.from_himalayas(item) for item in response["jobs"]]

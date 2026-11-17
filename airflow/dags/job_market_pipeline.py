@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from airflow.providers.docker.operators.docker import DockerOperator  # pyright: ignore[reportMissingImports]
+from docker.types import Mount
 
 from airflow import DAG
 
@@ -27,4 +28,12 @@ with DAG(
         network_mode="job-market-network",
         auto_remove="success",
         mount_tmp_dir=False,
+        mounts=[
+            Mount(
+                source="/home/rayan/dev/Projets/job_market_intelligence/app.env",
+                target="/app/app.env",
+                type="bind",
+                read_only=True,
+            )
+        ],
     )
