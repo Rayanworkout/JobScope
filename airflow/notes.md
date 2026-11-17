@@ -22,3 +22,9 @@ docker compose --env-file .env \
 ```bash
 docker compose --env-file .env -f airflow/docker-compose.yaml up  --build -d
 ```
+
+- Get airflow compose logs
+
+```bash
+docker compose --env-file .env -f airflow/docker-compose.yaml ps
+```
