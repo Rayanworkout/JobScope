@@ -14,22 +14,13 @@ with DAG(
     catchup=False,
     tags=["job-market"],
 ) as dag:
-
-    # Extract Job offers from APIs
-    extract_jobs = DockerOperator(
-        task_id="extract_jobs",
-        image="job-market-app:dev",
-        command=[
-            "/app/.venv/bin/python",
-            "-m",
-            "job_market.ingestion.extract",
-        ],
-        docker_url="unix://var/run/docker.sock",
-        network_mode="job-market-network",
-        auto_remove="success",
-        mount_tmp_dir=False,
-        # We mount app.env inside the container
-        mounts=[
+    docker_default_args = {
+        "image": "job-market-app:dev",
+        "docker_url": "unix://var/run/docker.sock",
+        "network_mode": "job-market-network",
+        "auto_remove": "success",
+        "mount_tmp_dir": False,
+        "mounts": [
             Mount(
                 source="/home/rayan/dev/Projets/job_market_intelligence/app.env",
                 target="/app/app.env",
@@ -37,7 +28,29 @@ with DAG(
                 read_only=True,
             )
         ],
+    }
+
+    extract_jobs = DockerOperator(
+        task_id="extract_jobs",
+        command=[
+            "/app/.venv/bin/python",
+            "-m",
+            "job_market.ingestion.extract",
+        ],
+        **docker_default_args,
     )
+
+    load_jobs = DockerOperator(
+        task_id="load_jobs",
+        command=[
+            "/app/.venv/bin/python",
+            "-m",
+            "job_market.ingestion.load",
+        ],
+        **docker_default_args,
+    )
+
+    extract_jobs >> load_jobs
 
     # The mount paths are not Jinja template files despite their .env suffix.
     extract_jobs.template_ext = (".sh", ".bash")
