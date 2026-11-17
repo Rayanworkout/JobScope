@@ -10,20 +10,23 @@ networks:
     external: true
 ```
 
-Running a specific container
+We created a dedicared postgres role for the app so it can only access its database and not the airflow database. It's basic permission management.
+
+- How to ?
 
 ```bash
-docker compose \
-  --env-file .env \
-  --env-file app.env \
-  -f airflow/docker-compose.yaml \
-  up -d
-```
 
-```bash
-docker compose \
-  --env-file .env \
-  --env-file app.env \
-  -f postgres/docker-compose.yaml \
-  up -d
+docker exec -it job-market-postgres \
+  sh -lc 'psql -U "$POSTGRES_USER" -d postgres'
+
+CREATE ROLE job_market_app LOGIN;
+
+\password job_market_app
+
+
+CREATE DATABASE job_market OWNER job_market_app;
+
+
+\l
+\q
 ```

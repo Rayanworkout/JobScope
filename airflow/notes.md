@@ -17,12 +17,23 @@ docker compose --env-file .env --env-file app.env \
   airflow dags list-import-errors
 ```
 
-- Rerun container
+- Running a specific container
 
 ```bash
-docker compose --env-file .env --env-file app.env -f airflow/docker-compose.yaml up -d
+docker compose \
+  --env-file .env \
+  --env-file app.env \
+  -f airflow/docker-compose.yaml \
+  up -d
 ```
 
+```bash
+docker compose \
+  --env-file .env \
+  --env-file app.env \
+  -f postgres/docker-compose.yaml \
+  up -d
+```
 - Get airflow compose logs
 
 ```bash
