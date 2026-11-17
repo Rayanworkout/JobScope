@@ -1,8 +1,8 @@
-from .services.himalayas import fetch_himalayas_api
+from .services.himalayas import fetch_himalayas_listings
 
 
 def run_extraction():
-    fetch_himalayas_api()
+    himalayas_job_listings: dict = fetch_himalayas_listings()
 
 
 # Triggered by the DAG

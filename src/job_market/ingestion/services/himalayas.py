@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 
 from ...core.exceptions import MissingEnvironmentVariable
+from ..models import Job
 
 """
 
@@ -53,7 +54,7 @@ from ...core.exceptions import MissingEnvironmentVariable
 """
 
 
-def fetch_himalayas_api():
+def fetch_himalayas_listings():
     load_dotenv()
     API_URL, API_KEY = os.getenv("HIMALAYAS_API_URL"), os.getenv("HIMALAYAS_API_KEY")
 
@@ -62,4 +63,10 @@ def fetch_himalayas_api():
             "HIMALAYAS_API_URL and HIMALAYAS_API_KEY must be defined before running the extract job."
         )
 
-    r = requests.get(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}).json()
+    raw_data = requests.get(
+        API_URL, headers={"Authorization": f"Bearer {API_KEY}"}
+    ).json()
+
+    jobs_objects = [Job.from_himalayas(item) for item in raw_data["jobs"]]
+
+    print(jobs_objects[0])
