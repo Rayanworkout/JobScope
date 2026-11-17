@@ -52,15 +52,15 @@ import requests
 from dotenv import load_dotenv
 
 from ...core.exceptions import CouldNotFetchJobs, MissingEnvironmentVariable
-from ..models import Job
+from ...database.models import Job
 
 API_URL = "https://himalayas.app/jobs/api"
 PAGE_SIZE = 20
 REQUEST_TIMEOUT = 30
-REQUEST_DELAY = 0.3
+REQUEST_DELAY = 5  # seconds
 
 
-def fetch_himalayas_listings() -> list[Job]:
+def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
     load_dotenv("app.env")
 
     api_key = os.getenv("HIMALAYAS_API_KEY")
@@ -80,6 +80,8 @@ def fetch_himalayas_listings() -> list[Job]:
             }
         )
 
+        iterations = 0
+
         while True:
             params = {"limit": PAGE_SIZE}
 
@@ -94,6 +96,7 @@ def fetch_himalayas_listings() -> list[Job]:
                 )
                 response.raise_for_status()
                 payload = response.json()
+                iterations += 1
 
             except (requests.RequestException, ValueError) as exc:
                 raise CouldNotFetchJobs(
@@ -123,6 +126,10 @@ def fetch_himalayas_listings() -> list[Job]:
                 )
 
             cursor = next_cursor
+
+            if max_iterations is not None and iterations >= max_iterations:
+                break
+
             time.sleep(REQUEST_DELAY)
-    
+
     return jobs

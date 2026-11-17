@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+app.local.env
 app.env
 RNOTES.md
 logs/
