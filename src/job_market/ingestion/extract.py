@@ -1,6 +1,10 @@
-def main():
-    print("Hello from job-market extract new version !")
+from .services.himalayas import fetch_himalayas_api
 
 
+def run_extraction():
+    fetch_himalayas_api()
+
+
+# Triggered by the DAG
 if __name__ == "__main__":
-    main()
+    run_extraction()
