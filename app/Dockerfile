@@ -1,3 +1,5 @@
+# docker build -f app/Dockerfile -t job-market-app:dev .
+
 FROM python:3.12-slim
 
 WORKDIR /app

@@ -2,9 +2,10 @@ from datetime import datetime
 
 from airflow.providers.docker.operators.docker import DockerOperator  # pyright: ignore[reportMissingImports]
 
-from airflow import DAG, task
+from airflow import DAG
 
 with DAG(
+    # These args will get passed on to each operator
     dag_id="job_market_pipeline",
     description="Job market data pipeline",
     start_date=datetime(2026, 1, 1),
@@ -13,10 +14,7 @@ with DAG(
     tags=["job-market"],
 ) as dag:
 
-    @task.bash
-    def build_image():
-        return "cd /path/to/project && docker build -f app/Dockerfile -t job-market-app:dev ."
-
+    # Extract Job offers from APIs
     extract_jobs = DockerOperator(
         task_id="extract_jobs",
         image="job-market-app:dev",
@@ -30,6 +28,3 @@ with DAG(
         auto_remove="success",
         mount_tmp_dir=False,
     )
-
-    # The extraction job depends on the image build
-    build_image() >> extract_jobs
