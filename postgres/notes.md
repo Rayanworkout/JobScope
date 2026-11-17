@@ -15,6 +15,7 @@ Running a specific container
 ```bash
 docker compose \
   --env-file .env \
+  --env-file app.env \
   -f airflow/docker-compose.yaml \
   up -d
 ```
@@ -22,6 +23,7 @@ docker compose \
 ```bash
 docker compose \
   --env-file .env \
+  --env-file app.env \
   -f postgres/docker-compose.yaml \
   up -d
 ```

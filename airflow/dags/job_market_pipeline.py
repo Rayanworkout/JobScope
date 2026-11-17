@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow.providers.docker.operators.docker import DockerOperator  # pyright: ignore[reportMissingImports]
-from docker.types import Mount
+from docker.types import Mount  # pyright: ignore[reportMissingModuleSource]
 
 from airflow import DAG
 
@@ -28,6 +28,7 @@ with DAG(
         network_mode="job-market-network",
         auto_remove="success",
         mount_tmp_dir=False,
+        # We mount app.env inside the container
         mounts=[
             Mount(
                 source="/home/rayan/dev/Projets/job_market_intelligence/app.env",
@@ -37,3 +38,6 @@ with DAG(
             )
         ],
     )
+
+    # The mount paths are not Jinja template files despite their .env suffix.
+    extract_jobs.template_ext = (".sh", ".bash")
