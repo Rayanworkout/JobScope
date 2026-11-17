@@ -32,13 +32,15 @@ class JobMarketDatabase:
 
     def insert_job(self, job: Job) -> bool:
         conn = self._get_connection()
-        with conn.cursor() as cur:
+
+        with conn, conn.cursor() as cur: # combine with statements
             cur.execute(
                 f"""
-            INSERT INTO {JOB_LISTINGS_TABLE}
-            (source, source_guid, title, company_name, is_expired, raw_data)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """,
+                    INSERT INTO {JOB_LISTINGS_TABLE}
+                    (source, source_guid, title, company_name, is_expired, raw_data)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (source, source_guid) DO NOTHING;
+                    """,
                 (
                     job.source,
                     job.source_guid,
@@ -48,5 +50,3 @@ class JobMarketDatabase:
                     Jsonb(job.raw_data),
                 ),
             )
-
-        return True

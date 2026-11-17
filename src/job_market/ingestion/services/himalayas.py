@@ -114,6 +114,8 @@ def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
 
             jobs.extend(Job.from_himalayas(item) for item in items)
 
+            print(f"Fetched {len(jobs)} jobs ...")
+
             next_cursor = payload.get("nextCursor")
 
             if not next_cursor:
