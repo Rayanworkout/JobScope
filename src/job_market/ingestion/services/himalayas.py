@@ -67,7 +67,7 @@ def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
 
     if not api_key:
         raise MissingEnvironmentVariable(
-            "HIMALAYAS_API_KEY must be defined before running the extract job."
+            "HIMALAYAS_API_KEY variable is not set."
         )
 
     jobs: list[Job] = []

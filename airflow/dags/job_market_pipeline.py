@@ -30,27 +30,15 @@ with DAG(
         ],
     }
 
-    extract_jobs = DockerOperator(
-        task_id="extract_jobs",
+    ingest_jobs = DockerOperator(
+        task_id="ingest_jobs",
         command=[
             "/app/.venv/bin/python",
             "-m",
-            "job_market.ingestion.extract",
+            "job_market.main",
         ],
         **docker_default_args,
     )
-
-    load_jobs = DockerOperator(
-        task_id="load_jobs",
-        command=[
-            "/app/.venv/bin/python",
-            "-m",
-            "job_market.ingestion.load",
-        ],
-        **docker_default_args,
-    )
-
-    extract_jobs >> load_jobs
 
     # The mount paths are not Jinja template files despite their .env suffix.
-    extract_jobs.template_ext = (".sh", ".bash")
+    ingest_jobs.template_ext = (".sh", ".bash")

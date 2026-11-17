@@ -1,13 +1,12 @@
 """
-This file is only used in development. We use it to manually run the entire
-pipeline, but in production the DAGs are running the different commands.
-
-This way we can declare dependencies and manage execution of each step instead
-of just one script.
+Entry point for the ingestion pipeline, run locally or by Airflow.
 
 To run it from the `job_market_intelligence` directory.
 """
 
 # uv run --env-file app.local.env -m src.job_market.main
 
-import src.job_market.ingestion.load
+from .ingestion.load import load_jobs_into_database
+
+if __name__ == "__main__":
+    load_jobs_into_database(max_iterations=5)
