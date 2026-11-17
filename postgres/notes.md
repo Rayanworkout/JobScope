@@ -30,3 +30,15 @@ CREATE DATABASE job_market OWNER job_market_app;
 \l
 \q
 ```
+
+We migrate using this command
+
+`./db/migrate.py`
+
+It prompts for the migration name then we can write the SQL inside, and run the next following commands.
+
+```bash
+dbmate_local status
+dbmate_local migrate
+dbmate_local status
+```
