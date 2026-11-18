@@ -32,7 +32,9 @@ class JobMarketDatabase:
         return psycopg.connect(self.db_url)
 
     def insert_job(self, job: Job) -> bool:
-
+        """
+        Insert a Job instance in database and close the connection
+        """
         with self.conn, self.conn.cursor() as cur:  # combine with statements
             cur.execute(
                 f"""
@@ -52,7 +54,10 @@ class JobMarketDatabase:
             )
 
     def insert_batch_jobs(self, jobs: Iterable[Job]) -> int:
-
+        """
+        Insert a batch of Job instances in database but does
+        not close the connection
+        """
         query = f"""
             INSERT INTO {JOB_LISTINGS_TABLE}
             (source, source_guid, title, company_name, is_expired, raw_data)
@@ -60,20 +65,25 @@ class JobMarketDatabase:
             ON CONFLICT (source, source_guid) DO NOTHING;
         """
 
-        with self.conn.cursor() as cur:
-            cur.executemany(
-                query,
-                [
-                    (
-                        job.source,
-                        job.source_guid,
-                        job.title,
-                        job.company_name,
-                        job.is_expired,
-                        Jsonb(job.raw_data),
-                    )
-                    for job in jobs
-                ],
+        params = [
+            (
+                job.source,
+                job.source_guid,
+                job.title,
+                job.company_name,
+                job.is_expired,
+                Jsonb(job.raw_data),
             )
+            for job in jobs
+        ]
 
-            return cur.rowcount
+        try:
+            with self.conn.cursor() as cur:
+                cur.executemany(query, params)
+                inserted = cur.rowcount
+            self.conn.commit()
+            return inserted
+        except Exception:
+            self.conn.rollback()
+            # Throw again the Exception that has just been captured
+            raise
