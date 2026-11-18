@@ -47,6 +47,7 @@ RESPONSE EXAMPLE (1 ITEM)
 
 import os
 import time
+from collections.abc import Iterator
 
 import requests
 from dotenv import load_dotenv
@@ -60,17 +61,18 @@ REQUEST_TIMEOUT = 30
 REQUEST_DELAY = 5  # seconds
 
 
-def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
+def fetch_himalayas_listings(max_iterations: int | None) -> Iterator[Job]:
+    """
+    We fetch the himalayas listings using a requests.Session, convert the
+    json into a Job object and yield the list every time its a multiple of 20.
+    """
     load_dotenv("app.env")
 
     api_key = os.getenv("HIMALAYAS_API_KEY")
 
     if not api_key:
-        raise MissingEnvironmentVariable(
-            "HIMALAYAS_API_KEY variable is not set."
-        )
+        raise MissingEnvironmentVariable("HIMALAYAS_API_KEY variable is not set.")
 
-    jobs: list[Job] = []
     cursor: str | None = None
 
     with requests.Session() as session:
@@ -96,7 +98,6 @@ def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
                 )
                 response.raise_for_status()
                 payload = response.json()
-                iterations += 1
 
             except (requests.RequestException, ValueError) as exc:
                 raise CouldNotFetchJobs(
@@ -112,9 +113,7 @@ def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
                     payload,
                 )
 
-            jobs.extend(Job.from_himalayas(item) for item in items)
-
-            print(f"Fetched {len(jobs)} jobs ...")
+            yield (Job.from_himalayas(item) for item in items)
 
             next_cursor = payload.get("nextCursor")
 
@@ -128,10 +127,9 @@ def fetch_himalayas_listings(max_iterations: int | None) -> list[Job]:
                 )
 
             cursor = next_cursor
+            iterations += 1
 
             if max_iterations is not None and iterations >= max_iterations:
                 break
 
             time.sleep(REQUEST_DELAY)
-
-    return jobs

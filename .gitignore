@@ -13,3 +13,4 @@ app.local.env
 app.env
 RNOTES.md
 logs/
+.vscode/
