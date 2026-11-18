@@ -22,12 +22,11 @@ class JobMarketDatabase:
         self.conn = self._get_connection()
 
     def __test_connection(self):
-        conn = self._get_connection()
-        with conn.cursor() as cur:
+        with self._get_connection() as conn, conn.cursor() as cur:
             cur.execute(f"""
-                SELECT * FROM {JOB_LISTINGS_TABLE}
-                LIMIT 1;
-            """)
+                    SELECT * FROM {JOB_LISTINGS_TABLE}
+                    LIMIT 1;
+                """)
 
     def _get_connection(self) -> Connection:
         return psycopg.connect(self.db_url)
@@ -61,7 +60,7 @@ class JobMarketDatabase:
             ON CONFLICT (source, source_guid) DO NOTHING;
         """
 
-        with self.conn, self.conn.cursor() as cur:
+        with self.conn.cursor() as cur:
             cur.executemany(
                 query,
                 [

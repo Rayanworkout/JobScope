@@ -10,4 +10,4 @@ from .ingestion.load import load_jobs_into_database
 
 if __name__ == "__main__":
     inserted_jobs = load_jobs_into_database(2)
-    print(inserted_jobs, "jobs inserted in database.")
+    print(f"Total of {inserted_jobs} jobs inserted in database.")
