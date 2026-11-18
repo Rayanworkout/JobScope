@@ -9,7 +9,7 @@ def load_jobs_into_database(max_iterations: int | None = None) -> int:
     
     for jobs in run_extraction(max_iterations):
 
-        inserted_count += db.insert_batch_jobs(jobs)
+        inserted_count += db.insert_or_ignore_batch_jobs(jobs)
 
         print(inserted_count, "jobs inserted in database.")
     

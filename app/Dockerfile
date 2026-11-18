@@ -15,6 +15,7 @@ RUN uv sync --frozen --no-dev
 
 ENV PYTHONPATH=/app/src
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
 
 # This command is overriden by the DAG command anyway
 CMD ["python", "-m", "job_market.main"]

@@ -31,7 +31,7 @@ class JobMarketDatabase:
     def _get_connection(self) -> Connection:
         return psycopg.connect(self.db_url)
 
-    def insert_job(self, job: Job) -> bool:
+    def insert_or_ignore_job(self, job: Job) -> bool:
         """
         Insert a Job instance in database and close the connection
         """
@@ -53,7 +53,7 @@ class JobMarketDatabase:
                 ),
             )
 
-    def insert_batch_jobs(self, jobs: Iterable[Job]) -> int:
+    def insert_or_ignore_batch_jobs(self, jobs: Iterable[Job]) -> int:
         """
         Insert a batch of Job instances in database but does
         not close the connection

@@ -55,16 +55,19 @@ from dotenv import load_dotenv
 from ...core.exceptions import CouldNotFetchJobs, MissingEnvironmentVariable
 from ...database.models import Job
 
+# RATELIMIT
+# 60 per minute (1 / s) and 10,000 per day
+
 API_URL = "https://himalayas.app/jobs/api"
 PAGE_SIZE = 20
 REQUEST_TIMEOUT = 30
-REQUEST_DELAY = 5  # seconds
+REQUEST_DELAY = 2  # seconds
 
 
 def fetch_himalayas_listings(max_iterations: int | None) -> Iterator[Job]:
     """
     We fetch the himalayas listings using a requests.Session, convert the
-    json into a Job object and yield the list every time its a multiple of 20.
+    json into a Job object and yield the list every 20 jobs.
     """
     load_dotenv("app.env")
 
