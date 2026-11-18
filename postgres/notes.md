@@ -42,3 +42,34 @@ dbmate_local status
 dbmate_local migrate
 dbmate_local status
 ```
+
+
+- Copy the content of the prod table into dev table
+
+```sql
+BEGIN;
+
+
+INSERT INTO job_listings_dev (
+        source,
+        source_guid,
+        title,
+        company_name,
+        raw_data,
+        fetched_at,
+        is_expired
+    )
+    SELECT
+        source,
+        source_guid,
+        title,
+        company_name,
+        raw_data,
+        fetched_at,
+        is_expired
+    FROM job_listings
+
+ON CONFLICT (source, source_guid) DO NOTHING;
+
+COMMIT;
+```

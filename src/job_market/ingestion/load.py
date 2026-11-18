@@ -3,6 +3,7 @@ from .extract import run_extraction
 
 
 def load_jobs_into_database(max_iterations: int | None = None) -> int:
+    
     db = JobMarketDatabase()
 
     inserted_count = 0

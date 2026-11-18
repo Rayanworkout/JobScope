@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+"""Run dbmate migrations in Docker from the repository root.
+
+The script uses app.env for the database URL and mounts db/ into the container.
+The job-market-network Docker network must already exist.
+
+Examples:
+    ./db/migrate.py status                 # Show applied and pending migrations
+    ./db/migrate.py new add_salary_fields  # Create a migration in db/migrations/
+    ./db/migrate.py migrate                # Apply pending migrations
+    ./db/migrate.py rollback               # Roll back the latest migration
+"""
 
 import os
 import subprocess
