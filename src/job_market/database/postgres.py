@@ -38,34 +38,44 @@ class JobMarketDatabase:
     def _get_connection(self) -> Connection:
         return psycopg.connect(self.db_url)
 
-    def insert_or_ignore_job(self, job: Job) -> bool:
+    def insert_or_ignore_job(self, job: Job) -> int:
         """
-        Insert a Job instance in database and close the connection
+        Insert a Job instance in database but does
+        not close the connection.
         """
-        with self.conn, self.conn.cursor() as cur:  # combine with statements
-            cur.execute(
-                f"""
-                    INSERT INTO {self.job_listings_table}
-                    (source, source_guid, title, company_name, is_expired, raw_data)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (source, source_guid) DO NOTHING;
-                    """,
-                (
-                    job.source,
-                    job.source_guid,
-                    job.title,
-                    job.company_name,
-                    job.is_expired,
-                    Jsonb(job.raw_data),
-                ),
-            )
+        query = f"""
+            INSERT INTO {self.job_listings_table}
+            (source, source_guid, title, company_name, is_expired, raw_data)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (source, source_guid) DO NOTHING;
+        """
+
+        params = (
+            job.source,
+            job.source_guid,
+            job.title,
+            job.company_name,
+            job.is_expired,
+            Jsonb(job.raw_data),
+        )
+
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(query, params)
+                inserted = cur.rowcount
+
+            self.conn.commit()
+            return inserted
+
+        except Exception:
+            self.conn.rollback()
+            raise
 
     def insert_or_ignore_batch_jobs(self, jobs: Iterable[Job]) -> int:
         """
         Insert a batch of Job instances in database but does
         not close the connection
         """
-        print(JOB_LISTINGS_TABLE)
         query = f"""
             INSERT INTO {self.job_listings_table}
             (source, source_guid, title, company_name, is_expired, raw_data)

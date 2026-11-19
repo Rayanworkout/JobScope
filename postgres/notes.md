@@ -38,9 +38,9 @@ We migrate using this command
 It prompts for the migration name then we can write the SQL inside, and run the next following commands.
 
 ```bash
-dbmate_local status
-dbmate_local migrate
-dbmate_local status
+status
+migrate
+status
 ```
 
 

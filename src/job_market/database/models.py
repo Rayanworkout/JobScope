@@ -12,11 +12,13 @@ class Job:
     into the database
     """
 
+    db_id: int | None
     source: str
     source_guid: str
     title: str
     company_name: str
     is_expired: bool
+    fetched_at: int | None
     raw_data: dict[str, Any]
 
     @classmethod
@@ -29,6 +31,12 @@ class Job:
             is_expired=timestamp_is_expired(data["expiryDate"]),
             raw_data=data,
         )
+
+    @classmethod
+    def from_db_row(cls, data: dict[str, Any]) -> "Job":  # noqa: UP037
+        data["db_id"] = data.pop("id")
+
+        return cls(**data)
 
     def __str__(self) -> str:
         txt = f"[{self.source}] {self.title} at {self.company_name}"
