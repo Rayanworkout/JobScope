@@ -58,7 +58,9 @@ class JobMarketDatabase:
             existing.title IS DISTINCT FROM EXCLUDED.title OR
             existing.company_name IS DISTINCT FROM EXCLUDED.company_name OR
             existing.is_expired IS DISTINCT FROM EXCLUDED.is_expired OR
-            existing.raw_data IS DISTINCT FROM EXCLUDED.raw_data;
+            existing.raw_data IS DISTINCT FROM EXCLUDED.raw_data
+
+        RETURNING (xmax = 0) AS inserted;
         """
 
     def _job_to_params(self, job: Job) -> tuple:
@@ -83,10 +85,13 @@ class JobMarketDatabase:
                     self._get_upsert_query(),
                     self._job_to_params(job),
                 )
-                affected = cur.rowcount
+                results = cur.fetchall()
+
+                inserted = sum(1 for row in results if row[0])
+                updated = sum(1 for row in results if not row[0])
 
             self.conn.commit()
-            return affected
+            return inserted, updated
         except Exception:
             self.conn.rollback()
             # Raise the exception that just been catched
@@ -102,11 +107,14 @@ class JobMarketDatabase:
 
         try:
             with self.conn.cursor() as cur:
-                cur.executemany(self._get_upsert_query(), params)
-                affected = cur.rowcount
+                cur.executemany(self._get_upsert_query(), params, returning=True)
+
+                results = cur.fetchall()
+                inserted = sum(1 for row in results if row[0])
+                updated = sum(1 for row in results if not row[0])
 
             self.conn.commit()
-            return affected
+            return inserted, updated
 
         except Exception:
             self.conn.rollback()

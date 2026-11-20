@@ -22,7 +22,7 @@ job = Job.from_db_row(data)
 
 print("Fetched:", job)
 # On modifie un des éléments puis on le réinsère en BDD
-job = replace(job, title="test_rayan_2")
+job = replace(job, title="test_rayan_3")
 
 print("New version:", job)
 

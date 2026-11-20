@@ -13,15 +13,15 @@ class Job:
     into the database
     """
 
-    db_id: int | None
     source: str
     source_guid: str
     title: str
     company_name: str
     is_expired: bool
-    updated_at: datetime.datetime | None
-    created_at: datetime.datetime | None
     raw_data: dict[str, Any]
+    db_id: int | None = None
+    updated_at: datetime.datetime | None = None
+    created_at: datetime.datetime | None = None
 
     @classmethod
     def from_himalayas(cls, data: dict[str, Any]) -> "Job":  # noqa: UP037
