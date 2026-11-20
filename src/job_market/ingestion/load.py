@@ -15,6 +15,5 @@ def load_jobs_into_database(max_iterations: int | None = None) -> int:
         inserted_count += inserted
         updated_count += updated
 
-        print(inserted_count, "job(s) inserted in database.")
 
-    return inserted_count
+    return inserted_count, updated_count

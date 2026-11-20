@@ -56,7 +56,8 @@ INSERT INTO job_listings_dev (
         title,
         company_name,
         raw_data,
-        fetched_at,
+        created_at,
+        updated_at,
         is_expired
     )
     SELECT
@@ -65,7 +66,8 @@ INSERT INTO job_listings_dev (
         title,
         company_name,
         raw_data,
-        fetched_at,
+        created_at,
+        updated_at,
         is_expired
     FROM job_listings
 

@@ -43,14 +43,15 @@ class JobMarketDatabase:
         # EXCLUDED. We can then take these values to decide what should be updated
         return f"""
         INSERT INTO {self.job_listings_table} AS existing
-        (source, source_guid, title, company_name, is_expired, raw_data)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        (source, source_guid, title, company_name, is_expired, description, raw_data)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         
         ON CONFLICT (source, source_guid)
         DO UPDATE SET
             title = EXCLUDED.title,
             company_name = EXCLUDED.company_name,
             is_expired = EXCLUDED.is_expired,
+            description = EXCLUDED.description,
             raw_data = EXCLUDED.raw_data,
             updated_at = NOW()
         
@@ -58,6 +59,7 @@ class JobMarketDatabase:
             existing.title IS DISTINCT FROM EXCLUDED.title OR
             existing.company_name IS DISTINCT FROM EXCLUDED.company_name OR
             existing.is_expired IS DISTINCT FROM EXCLUDED.is_expired OR
+            existing.description IS DISTINCT FROM EXCLUDED.description OR
             existing.raw_data IS DISTINCT FROM EXCLUDED.raw_data
 
         RETURNING (xmax = 0) AS inserted;
@@ -114,6 +116,7 @@ class JobMarketDatabase:
                 updated = sum(1 for row in results if not row[0])
 
             self.conn.commit()
+            print("Batch results:", inserted, "inserted", updated, "updated")
             return inserted, updated
 
         except Exception:
