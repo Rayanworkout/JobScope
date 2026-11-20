@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,7 +19,8 @@ class Job:
     title: str
     company_name: str
     is_expired: bool
-    fetched_at: int | None
+    updated_at: datetime.datetime | None
+    created_at: datetime.datetime | None
     raw_data: dict[str, Any]
 
     @classmethod

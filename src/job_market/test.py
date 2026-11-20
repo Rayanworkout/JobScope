@@ -7,6 +7,7 @@ from .database.postgres import JOB_LISTINGS_TABLE_DEV, JobMarketDatabase
 
 db = JobMarketDatabase()
 
+# uv run --env-file app.local.env -m src.job_market.test
 
 # On fetch une entrée de BDD et on la convertit en objet Job
 with db.conn.cursor(row_factory=dict_row) as cur:
@@ -18,13 +19,14 @@ with db.conn.cursor(row_factory=dict_row) as cur:
 
 job = Job.from_db_row(data)
 
+
 print("Fetched:", job)
 # On modifie un des éléments puis on le réinsère en BDD
-job = replace(job, title="test_rayan")
+job = replace(job, title="test_rayan_2")
 
 print("New version:", job)
 
-row_count = db.insert_or_ignore_job(job)
+row_count = db.upsert_job(job)
 
 print(row_count, "row edited.")
 

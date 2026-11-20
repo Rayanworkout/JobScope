@@ -19,11 +19,11 @@ class JobMarketDatabase:
         if self.db_url is None:
             raise MissingEnvironmentVariable("DATABASE_URL variable is not set.")
 
+        is_prod_mode = os.getenv("PROD_MODE", "false").lower() == "true"
         self.job_listings_table = (
-            JOB_LISTINGS_TABLE
-            if os.getenv("PROD_MODE", "false").lower() == "true"
-            else JOB_LISTINGS_TABLE_DEV
+            JOB_LISTINGS_TABLE if is_prod_mode else JOB_LISTINGS_TABLE_DEV
         )
+        print("PROD MODE:", is_prod_mode)
 
         self.__test_connection()
         self.conn = self._get_connection()
@@ -38,19 +38,31 @@ class JobMarketDatabase:
     def _get_connection(self) -> Connection:
         return psycopg.connect(self.db_url)
 
-    def insert_or_ignore_job(self, job: Job) -> int:
-        """
-        Insert a Job instance in database but does
-        not close the connection.
-        """
-        query = f"""
-            INSERT INTO {self.job_listings_table}
-            (source, source_guid, title, company_name, is_expired, raw_data)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (source, source_guid) DO NOTHING;
+    def _get_upsert_query(self) -> str:
+        # When a conflict occurs, Postgres provides the conflicted values through
+        # EXCLUDED. We can then take these values to decide what should be updated
+        return f"""
+        INSERT INTO {self.job_listings_table} AS existing
+        (source, source_guid, title, company_name, is_expired, raw_data)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        
+        ON CONFLICT (source, source_guid)
+        DO UPDATE SET
+            title = EXCLUDED.title,
+            company_name = EXCLUDED.company_name,
+            is_expired = EXCLUDED.is_expired,
+            raw_data = EXCLUDED.raw_data,
+            updated_at = NOW()
+        
+        WHERE
+            existing.title IS DISTINCT FROM EXCLUDED.title OR
+            existing.company_name IS DISTINCT FROM EXCLUDED.company_name OR
+            existing.is_expired IS DISTINCT FROM EXCLUDED.is_expired OR
+            existing.raw_data IS DISTINCT FROM EXCLUDED.raw_data;
         """
 
-        params = (
+    def _job_to_params(self, job: Job) -> tuple:
+        return (
             job.source,
             job.source_guid,
             job.title,
@@ -59,49 +71,44 @@ class JobMarketDatabase:
             Jsonb(job.raw_data),
         )
 
+    def upsert_job(self, job: Job) -> int:
+        """
+        Insert or update a Job instance in database but does
+        not close the connection.
+        """
+
         try:
             with self.conn.cursor() as cur:
-                cur.execute(query, params)
-                inserted = cur.rowcount
+                cur.execute(
+                    self._get_upsert_query(),
+                    self._job_to_params(job),
+                )
+                affected = cur.rowcount
 
             self.conn.commit()
-            return inserted
-
+            return affected
         except Exception:
             self.conn.rollback()
+            # Raise the exception that just been catched
             raise
 
-    def insert_or_ignore_batch_jobs(self, jobs: Iterable[Job]) -> int:
+    def upsert_batch_jobs(self, jobs: Iterable[Job]) -> int:
         """
-        Insert a batch of Job instances in database but does
+        Insert or update a batch of Job instances in database but does
         not close the connection
         """
-        query = f"""
-            INSERT INTO {self.job_listings_table}
-            (source, source_guid, title, company_name, is_expired, raw_data)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (source, source_guid) DO NOTHING;
-        """
 
-        params = [
-            (
-                job.source,
-                job.source_guid,
-                job.title,
-                job.company_name,
-                job.is_expired,
-                Jsonb(job.raw_data),
-            )
-            for job in jobs
-        ]
+        params = [self._job_to_params(job) for job in jobs]
 
         try:
             with self.conn.cursor() as cur:
-                cur.executemany(query, params)
-                inserted = cur.rowcount
+                cur.executemany(self._get_upsert_query(), params)
+                affected = cur.rowcount
+
             self.conn.commit()
-            return inserted
+            return affected
+
         except Exception:
             self.conn.rollback()
-            # Throw again the Exception that has just been captured
+            # Raise the exception that just been catched
             raise
