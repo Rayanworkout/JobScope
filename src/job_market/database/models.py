@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..core.helpers.expiration import timestamp_is_expired
+from ..core.helpers.parsing import html_to_text
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class Job:
     title: str
     company_name: str
     is_expired: bool
+    description: str
     raw_data: dict[str, Any]
     db_id: int | None = None
     updated_at: datetime.datetime | None = None
@@ -30,6 +32,7 @@ class Job:
             source_guid=data["guid"],
             title=data["title"],
             company_name=data["companyName"],
+            description=html_to_text(data["description"]),
             is_expired=timestamp_is_expired(data["expiryDate"]),
             raw_data=data,
         )

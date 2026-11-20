@@ -72,10 +72,11 @@ class JobMarketDatabase:
             job.title,
             job.company_name,
             job.is_expired,
+            job.description,
             Jsonb(job.raw_data),
         )
 
-    def upsert_job(self, job: Job) -> int:
+    def upsert_job(self, job: Job) -> tuple[int, int]:
         """
         Insert or update a Job instance in database but does
         not close the connection.
@@ -99,7 +100,7 @@ class JobMarketDatabase:
             # Raise the exception that just been catched
             raise
 
-    def upsert_batch_jobs(self, jobs: Iterable[Job]) -> int:
+    def upsert_batch_jobs(self, jobs: Iterable[Job]) -> tuple[int, int]:
         """
         Insert or update a batch of Job instances in database but does
         not close the connection
@@ -111,9 +112,17 @@ class JobMarketDatabase:
             with self.conn.cursor() as cur:
                 cur.executemany(self._get_upsert_query(), params, returning=True)
 
-                results = cur.fetchall()
-                inserted = sum(1 for row in results if row[0])
-                updated = sum(1 for row in results if not row[0])
+                inserted = 0
+                updated = 0
+                # executemany(returning=True) exposes one result set per job.
+                # An unchanged job has an empty result set because of the
+                # ON CONFLICT ... WHERE clause.
+                for result in cur.results():
+                    for (was_inserted,) in result.fetchall():
+                        if was_inserted:
+                            inserted += 1
+                        else:
+                            updated += 1
 
             self.conn.commit()
             print("Batch results:", inserted, "inserted", updated, "updated")
